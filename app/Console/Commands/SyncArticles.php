@@ -3,10 +3,12 @@
 namespace App\Console\Commands;
 
 use App\Models\Article;
-use App\Services\ArticleDto;
 
+
+use App\Services\Dto\ArticleDto;
 use App\Services\GuardianService;
-use App\Services\NewsApi\NewsApiService;
+
+use App\Services\NewsApiService;
 use App\Services\NyTimeService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
