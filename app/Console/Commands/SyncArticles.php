@@ -17,7 +17,7 @@ class SyncArticles extends Command
      *
      * @var string
      */
-    protected $signature = 'app:sync-articles';
+    protected $signature = 'app:sync-articles {source : The source aggregator name}';
 
     /**
      * The console command description.
@@ -31,30 +31,43 @@ class SyncArticles extends Command
      */
     public function handle()
     {
+        $aggregator = $this->argument('source');
+        $validate_aggregators = [
+            NewsApiService::AGGREGATOR_NAME, GuardianService::AGGREGATOR_NAME
+        ];
+        if (!in_array($aggregator, $validate_aggregators)) {
+            $this->error('Invalid Aggregator');
+            return;
+        }
         if (Article::query()->count() > 0) {
-            $from = Article::query()->where('aggregator', NewsApiService::AGGREGATOR_NAME)
+            $from = Article::query()->where('aggregator', $aggregator)
                 ->max('published_at');
         } else {
             $from = Carbon::now()->subHours(24);
         }
-        $from = Carbon::now()->subHours(24);
+        //$from = Carbon::now()->subHours(24);
         $to = Carbon::now();
-        $results = $this->getGuardianArticles($from, $to);
-        /*$results = $this->getNewsApiArticles($from, $to);*/
-        foreach ($results as $result) {
-            Article::query()->updateOrCreate(['external_url' => $result->url],
-                [
-                    'title' => $result->title,
-                    'description' => $result->description,
-                    'content' => $result->content,
-                    'image_url' => $result->imageUrl,
-                    'published_at' => $result->publishedAt,
-                    'author' => $result->author,
-                    'aggregator' => GuardianService::AGGREGATOR_NAME,
-                ]);
-        }
-        try {
 
+        try {
+            switch ($aggregator) {
+                case NewsApiService::AGGREGATOR_NAME:
+                    $results = $this->getNewsApiArticles($from, $to);
+                    break;
+                case GuardianService::AGGREGATOR_NAME:
+                    $results = $this->getGuardianArticles($from, $to);
+            }
+            foreach ($results as $result) {
+                Article::query()->updateOrCreate(['external_url' => $result->url],
+                    [
+                        'title' => $result->title,
+                        'description' => $result->description,
+                        'content' => $result->content,
+                        'image_url' => $result->imageUrl,
+                        'published_at' => $result->publishedAt,
+                        'author' => $result->author,
+                        'aggregator' => $aggregator,
+                    ]);
+            }
 
         } catch (\Exception $exception) {
             $this->error($exception->getMessage());
@@ -64,11 +77,12 @@ class SyncArticles extends Command
     private function getNewsApiArticles($from, $to)
     {
         $newsApiService = new NewsApiService();
-        return ArticleDto::collection($newsApiService->getArticles($from, $to));
+        return ArticleDto::collection($newsApiService->getArticles($from, $to), NewsApiService::AGGREGATOR_NAME);
     }
 
-    private function getGuardianArticles($from, $to){
+    private function getGuardianArticles($from, $to)
+    {
         $apiService = new GuardianService();
-        return ArticleDto::collection($apiService->getArticles($from, $to), 'guardian_api');
+        return ArticleDto::collection($apiService->getArticles($from, $to), GuardianService::AGGREGATOR_NAME);
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 
+use App\Services\NewsApi\NewsApiService;
 use Guardian\GuardianAPI;
 use Illuminate\Support\Collection;
 
@@ -59,9 +60,9 @@ class ArticleDto
     {
         $collection = collect();
         foreach ($articles as $article) {
-            if($type === 'news_api') {
+            if($type === NewsApiService::AGGREGATOR_NAME) {
                 $collection->add(self::fromNewsApi($article));
-            }elseif($type === 'guardian_api') {
+            }elseif($type === GuardianService::AGGREGATOR_NAME) {
                 $collection->add(self::fromGuardianApi($article));
             }
         }
