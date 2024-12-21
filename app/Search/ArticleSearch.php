@@ -5,7 +5,6 @@ namespace App\Search;
 use App\Models\Article;
 use App\Services\GuardianService;
 use App\Services\NewsApi\NewsApiService;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 

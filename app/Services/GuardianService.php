@@ -43,38 +43,41 @@ class GuardianService extends BaseService
      */
     public function getArticles($from, $to, $page = 1): array
     {
-
-        $this->checkApiThrottled();
         $articles = [];
         $hasMorePages = true; // assume that we will have more pages in the resultset in the start
+        try{
+            while ($hasMorePages) {
 
-        while ($hasMorePages) {
-            $results = $this->api->content()->setQuery($this->keywords)
-                ->setLang($this->language)
-                ->setShowFields('body,thumbnail,trailText')
-                ->setShowTags('contributor')
-                ->setPage($page)
-                ->setPageSize(self::PAGE_SIZE)
-                ->setFromDate(new \DateTimeImmutable($from))
-                ->setToDate(new \DateTimeImmutable($to))
-                ->fetch();
+                $this->checkDailyApiThrottled();
 
-            if (isset($results->response) && $results->response->status == 'ok') {
-                Cache::increment(self::CACHE_KEY);
+                $results = $this->api->content()->setQuery($this->keywords)
+                    ->setLang($this->language)
+                    ->setShowFields('body,thumbnail,trailText')
+                    ->setShowTags('contributor')
+                    ->setPage($page)
+                    ->setPageSize(self::PAGE_SIZE)
+                    ->setFromDate(new \DateTimeImmutable($from))
+                    ->setToDate(new \DateTimeImmutable($to))
+                    ->fetch();
 
-                // determine if there are more pages
-                $total_pages = $results->response->pages;
-                if ($page > $total_pages) {
-                    $hasMorePages = false;
+                if (isset($results->response) && $results->response->status == 'ok') {
+                    Cache::increment(self::CACHE_KEY);
+
+                    // determine if there are more pages
+                    $total_pages = $results->response->pages;
+                    if ($page > $total_pages) {
+                        $hasMorePages = false;
+                    }
+                    $page++;
+                    if (is_array($results->response->results) && count($results->response->results) > 0) {
+                        $articles = array_merge($results->response->results, $articles);
+
+                    }
                 }
-                $page++;
-                if (is_array($results->response->results) && count($results->response->results) > 0) {
-                    //Log::debug("guardian", [$results->response->results]);
-                    $articles = array_merge($results->response->results, $articles);
-
-                }
+                //$hasMorePages = false;
             }
-            //$hasMorePages = false;
+        }catch (DailyApiLimitException $e){
+            Log::error($e->getMessage());
         }
         return $articles;
     }

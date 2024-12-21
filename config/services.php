@@ -46,6 +46,13 @@ return [
         'daily_api_limit' => env('GUARDIAN_API_DAILY_LIMIT'),
         'keywords' => env('NEWS_API_KEYWORDS'),
         'lang' => env('NEWS_API_LANGUAGE'),
+    ],
+    'nytimes_api' => [
+        'api_key' => env('NY_TIMES_API_KEY'),
+        'daily_api_limit' => env('NY_TIMES_API_DAILY_LIMIT'),
+        'api_rate_per_minute' => env('NY_TIMES_API_RATE_PER_MINUTE'),
+        'keywords' => env('NEWS_API_KEYWORDS'),
+        'lang' => env('NEWS_API_LANGUAGE'),
     ]
 
 ];

@@ -7,6 +7,7 @@ use App\Services\ArticleDto;
 
 use App\Services\GuardianService;
 use App\Services\NewsApi\NewsApiService;
+use App\Services\NyTimeService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 
@@ -33,7 +34,7 @@ class SyncArticles extends Command
     {
         $aggregator = $this->argument('source');
         $validate_aggregators = [
-            NewsApiService::AGGREGATOR_NAME, GuardianService::AGGREGATOR_NAME
+            NewsApiService::AGGREGATOR_NAME, GuardianService::AGGREGATOR_NAME, NyTimeService::AGGREGATOR_NAME
         ];
         if (!in_array($aggregator, $validate_aggregators)) {
             $this->error('Invalid Aggregator');
@@ -55,6 +56,9 @@ class SyncArticles extends Command
                     break;
                 case GuardianService::AGGREGATOR_NAME:
                     $results = $this->getGuardianArticles($from, $to);
+                    break;
+                case NyTimeService::AGGREGATOR_NAME:
+                    $results = $this->getNyTimeArticles($from, $to);
             }
             foreach ($results as $result) {
                 Article::query()->updateOrCreate(['external_url' => $result->url],
@@ -84,5 +88,10 @@ class SyncArticles extends Command
     {
         $apiService = new GuardianService();
         return ArticleDto::collection($apiService->getArticles($from, $to), GuardianService::AGGREGATOR_NAME);
+    }
+    private function getNyTimeArticles($from, $to)
+    {
+        $apiService = new NyTimeService();
+        return ArticleDto::collection($apiService->getArticles($from, $to), NyTimeService::AGGREGATOR_NAME);
     }
 }

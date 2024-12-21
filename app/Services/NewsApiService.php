@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Services\NewsApi;
+namespace App\Services;
 
-use App\Services\BaseService;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use jcobhams\NewsApi\NewsApi;
+
 
 class NewsApiService extends BaseService
 {
@@ -46,40 +47,43 @@ class NewsApiService extends BaseService
     /**
      * @param $from string start date of the article
      * @param $to string end date of the article
-     * @return array
      * @throws \jcobhams\NewsApi\NewsApiException
-     * @throws \Exception
+     * @return array
      */
     public function getArticles($from, $to): array
     {
-        $this->checkApiThrottled();
+
         $articles = [];
         $hasMorePages = true; // assume that we will have more pages in the resultset in the start
-
-        while ($hasMorePages) {
-            $results = $this->newsApi->getEverything(
-                q: $this->keywords,
-                sources: $this->sources,
-                from: $from, to: $to,
-                language: $this->language,
-                sort_by: self::SORT_BY,
-                page_size: self::PAGE_SIZE,
-                page: $page,
-            );
-            if ($results->status == 'ok') {
-                Cache::increment(self::CACHE_KEY);
-                $total = $results->totalResults;
-                // determine if there are more pages
-                $total_pages = ceil($total / self::PAGE_SIZE);
-                if ($page >= $total_pages) {
-                    $hasMorePages = false;
+        try{
+            while ($hasMorePages) {
+                $this->checkDailyApiThrottled();
+                $results = $this->newsApi->getEverything(
+                    q: $this->keywords,
+                    sources: $this->sources,
+                    from: $from, to: $to,
+                    language: $this->language,
+                    sort_by: self::SORT_BY,
+                    page_size: self::PAGE_SIZE,
+                    page: $page,
+                );
+                if ($results->status == 'ok') {
+                    Cache::increment(self::CACHE_KEY);
+                    $total = $results->totalResults;
+                    // determine if there are more pages
+                    $total_pages = ceil($total / self::PAGE_SIZE);
+                    if ($page >= $total_pages) {
+                        $hasMorePages = false;
+                    }
+                    $page++;
+                    if (is_array($results->articles) && count($results->articles) > 0) {
+                        $articles = array_merge($results->articles, $articles);
+                    }
                 }
-                $page++;
-                if (is_array($results->articles) && count($results->articles) > 0) {
-                    $articles = array_merge($results->articles, $articles);
-                }
+                //$hasMorePages = false;
             }
-            //$hasMorePages = false;
+        }catch (DailyApiLimitException $e){
+            Log::error($e->getMessage());
         }
         return $articles;
     }

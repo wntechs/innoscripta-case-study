@@ -15,9 +15,10 @@ abstract class BaseService
     const PAGE_SIZE = 100;
 
     /**
-     * @throws \Exception
+     * @return void
+     * @throws DailyApiLimitException
      */
-    protected function checkApiThrottled(): void
+    protected function checkDailyApiThrottled(): void
     {
         // check if API daily limit is imposed or not
         if (!Cache::has(self::CACHE_KEY)) {
@@ -25,7 +26,7 @@ abstract class BaseService
         }
         $api_counts = Cache::get(self::CACHE_KEY, 0);
         if ($api_counts >= $this->dailyApiLimit) {
-            throw new \Exception('Daily API limit exceeded');
+            throw new DailyApiLimitException('Daily API limit exceeded');
         }
     }
 }
