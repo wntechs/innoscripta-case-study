@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->text('description');
-            $table->text('content');
+            $table->longText('content');
             $table->text('image_url')->nullable();
             $table->text('external_url');
             $table->timestamp('published_at');

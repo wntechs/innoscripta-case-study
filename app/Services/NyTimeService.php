@@ -13,7 +13,6 @@ class NyTimeService extends BaseService
     const CACHE_KEY = "nytimes_api_counts";
     const SORT_BY = 'newest';
     const PAGE_SIZE = 10;
-    protected $api_key;
     protected $rate_per_minute;
 
     /**
@@ -21,37 +20,23 @@ class NyTimeService extends BaseService
      */
     public function __construct()
     {
-        $api_key = config('services.nytimes_api.api_key');
-        if (empty($api_key)) {
-            throw new \Exception('Please set api_key for the service');
-        }
-        $this->api_key = $api_key;
-
-        $keywords = config('services.nytimes_api.keywords');
-        if (empty($keywords)) {
-            throw new \Exception('Please set keywords for the service');
-        } else {
-            $this->keywords = str($keywords)->replace(',', ' OR ');
-        }
-
-        $this->dailyApiLimit = config('services.nytimes_api.daily_api_limit', 100);
+        parent::__construct(config('services.nytimes_api'));
         $this->rate_per_minute = config('services.nytimes_api.api_rate_per_minute', 10);
-        $this->language = config('services.nytimes_api.language', 'en');
+
     }
 
     /**
-     * @param $from string start date of the article
-     * @param $to string end date of the article
+     * @param Carbon $from
+     * @param Carbon $to
+     * @param $page
      * @return array
-     * @throws \Exception
      */
-    public function getArticles($from, $to, $page = 1): array
+    public function getArticles(Carbon $from, Carbon $to, $page = 1): array
     {
 
 
         $articles = [];
         $hasMorePages = true; // assume that we will have more pages in the resultset in the start
-
         try{
             while ($hasMorePages) {
                 $this->checkDailyApiThrottled();
@@ -60,11 +45,14 @@ class NyTimeService extends BaseService
                     'page' => $page,
                     'api-key' => $this->api_key,
                     'sort' => self::SORT_BY,
-                    'begin_date' => Carbon::parse($from)->format('Ymd'),
-                    'end_date' => Carbon::parse($to)->format('Ymd'),
+                    'begin_date' => $from->format('Ymd'),
+                    'end_date' => $to->format('Ymd'),
                 ]);
                 $results = json_decode($response->body());
-
+                if(isset($results->fault)){
+                    Log::error("Api Limit Reached", [$results]);
+                    break;
+                }
                 if (isset($results->status) && $results->status == 'OK') {
                     Cache::increment(self::CACHE_KEY);
 
@@ -79,12 +67,15 @@ class NyTimeService extends BaseService
 
                         $articles = array_merge($results->response->docs, $articles);
 
+                        sleep(10); //to prevent rate limit per minutes
                     }
                 }
                 //$hasMorePages = false;
             }
         }catch (DailyApiLimitException $e){
             Log::error($e->getMessage());
+        }catch (\Exception $e){
+            Log::error("ERR2:".$e->getMessage());
         }
         return $articles;
     }

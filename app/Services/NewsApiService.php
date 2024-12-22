@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use jcobhams\NewsApi\NewsApi;
@@ -21,27 +22,14 @@ class NewsApiService extends BaseService
      */
     public function __construct()
     {
-        $api_key = config('services.news_api.api_key');
-        if (empty($api_key)) {
-            throw new \Exception('Please set api_key for the service');
-        }
-
-        $keywords = config('services.news_api.keywords');
-        if (empty($keywords)) {
-            throw new \Exception('Please set keywords for the service');
-        } else {
-            $this->keywords = str($keywords)->replace(',', ' OR ');
-        }
-
+        parent::__construct(config('services.news_api'));
         $sources = config('services.news_api.sources');
         if (empty($sources)) {
             throw new \Exception('Please set sources for the service');
         } else {
             $this->sources = $sources;
         }
-        $this->dailyApiLimit = config('services.news_api.daily_api_limit', 100);
-        $this->language = config('services.news_api.language', 'en');
-        $this->newsApi = new NewsApi($api_key);
+        $this->newsApi = new NewsApi($this->api_key);
     }
 
     /**
@@ -50,9 +38,11 @@ class NewsApiService extends BaseService
      * @throws \jcobhams\NewsApi\NewsApiException
      * @return array
      */
-    public function getArticles($from, $to): array
+    public function getArticles(Carbon $from, Carbon $to): array
     {
 
+        $page = 1;
+        $counter = 0;
         $articles = [];
         $hasMorePages = true; // assume that we will have more pages in the resultset in the start
         try{
@@ -61,12 +51,13 @@ class NewsApiService extends BaseService
                 $results = $this->newsApi->getEverything(
                     q: $this->keywords,
                     sources: $this->sources,
-                    from: $from, to: $to,
+                    from: $from->format('Y-m-d\TH:i:s'), to: $to->format('Y-m-d\TH:i:s'),
                     language: $this->language,
                     sort_by: self::SORT_BY,
                     page_size: self::PAGE_SIZE,
                     page: $page,
                 );
+
                 if ($results->status == 'ok') {
                     Cache::increment(self::CACHE_KEY);
                     $total = $results->totalResults;
@@ -80,11 +71,14 @@ class NewsApiService extends BaseService
                         $articles = array_merge($results->articles, $articles);
                     }
                 }
-                //$hasMorePages = false;
+
             }
         }catch (DailyApiLimitException $e){
-            Log::error($e->getMessage());
+            Log::error("ERR:".$e->getMessage());
+        }catch (\Exception $e){
+            Log::error("ERR2:".$e->getMessage());
         }
+
         return $articles;
     }
 

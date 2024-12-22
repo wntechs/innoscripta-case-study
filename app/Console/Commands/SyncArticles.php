@@ -42,13 +42,15 @@ class SyncArticles extends Command
             $this->error('Invalid Aggregator');
             return;
         }
-        if (Article::query()->count() > 0) {
+        if (Article::query()->where('aggregator', $aggregator)->count() > 0) {
             $from = Article::query()->where('aggregator', $aggregator)
                 ->max('published_at');
+            $from = Carbon::parse($from);
         } else {
-            $from = Carbon::now()->subHours(24);
+            // for the first fetch last 15 days data
+            $from = Carbon::now()->startOfDay()->subDays(15);
         }
-        //$from = Carbon::now()->subHours(24);
+
         $to = Carbon::now();
 
         try {
@@ -63,6 +65,7 @@ class SyncArticles extends Command
                     $results = $this->getNyTimeArticles($from, $to);
             }
             foreach ($results as $result) {
+                if($result->description == null) continue;
                 Article::query()->updateOrCreate(['external_url' => $result->url],
                     [
                         'title' => $result->title,

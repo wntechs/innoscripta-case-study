@@ -3,7 +3,7 @@
 namespace App\Services\Dto;
 
 
-trait HasNewApiResponse
+trait HasNewsApiResponse
 {
     public static function fromNewsApi($article): ArticleDto
     {

@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Cache;
+use jcobhams\NewsApi\NewsApi;
 
 abstract class BaseService
 {
+    protected string $api_key;
     protected int $dailyApiLimit;
     protected string $keywords;
     protected string $language;
@@ -14,6 +16,23 @@ abstract class BaseService
     const SORT_BY = 'publishedAt';
     const PAGE_SIZE = 100;
 
+    public function __construct($config)
+    {
+        $api_key = $config['api_key'];
+        if (empty($api_key)) {
+            throw new \Exception('Please set api_key for the service');
+        }
+        $keywords = config('services.news_keywords');
+        if (empty($keywords)) {
+            throw new \Exception('Please set keywords for the service');
+        } else {
+            $this->keywords = str($keywords)->replace(',', ' OR ');
+        }
+        $this->dailyApiLimit = $config['daily_api_limit'];
+        $this->language = config('services.news_lang');
+        $this->api_key = $api_key;
+
+    }
     /**
      * @return void
      * @throws DailyApiLimitException

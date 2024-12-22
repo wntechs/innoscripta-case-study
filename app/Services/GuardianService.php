@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Carbon\Carbon;
 use Guardian\GuardianAPI;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -19,30 +20,21 @@ class GuardianService extends BaseService
      */
     public function __construct()
     {
-        $api_key = config('services.guardian_api.api_key');
-        if (empty($api_key)) {
-            throw new \Exception('Please set api_key for the service');
-        }
+        parent::__construct(config('services.guardian_api'));
 
-        $keywords = config('services.guardian_api.keywords');
-        if (empty($keywords)) {
-            throw new \Exception('Please set keywords for the service');
-        } else {
-            $this->keywords = str($keywords)->replace(',', ' OR ');
-        }
-
-        $this->dailyApiLimit = config('services.guardian_api.daily_api_limit', 100);
-        $this->language = config('services.guardian_api.language', 'en');
-        $this->api = new GuardianAPI($api_key);
+        $this->api = new GuardianAPI($this->api_key);
     }
+
     /**
-     * @param $from string start date of the article
-     * @param $to string end date of the article
+     * @param Carbon $from
+     * @param Carbon $to
+     * @param int $page
      * @return array
-     * @throws \Exception
+     * @throws \DateMalformedStringException
      */
-    public function getArticles($from, $to, $page = 1): array
+    public function getArticles(Carbon $from, Carbon $to, int $page = 1): array
     {
+        //dd($from->format('Y-m-d'), $to->format('Y-m-d'));
         $articles = [];
         $hasMorePages = true; // assume that we will have more pages in the resultset in the start
         try{
@@ -78,6 +70,8 @@ class GuardianService extends BaseService
             }
         }catch (DailyApiLimitException $e){
             Log::error($e->getMessage());
+        }catch (\Exception $e){
+            Log::error("ERR2:".$e->getMessage());
         }
         return $articles;
     }

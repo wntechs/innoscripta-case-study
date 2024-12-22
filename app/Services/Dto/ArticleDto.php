@@ -9,15 +9,15 @@ use Illuminate\Support\Collection;
 
 class ArticleDto
 {
-    use HasNewApiResponse, HasGuardianResponse, HasNyTimesResponse;
+    use HasNewsApiResponse, HasGuardianResponse, HasNyTimesResponse;
 
     public function __construct(public string  $title,
                                 public string  $content,
                                 public ?string $author,
                                 public string  $publishedAt,
-                                public string  $description,
+                                public ?string  $description,
                                 public string  $url,
-                                public string  $imageUrl)
+                                public ?string  $imageUrl)
     {
 
     }

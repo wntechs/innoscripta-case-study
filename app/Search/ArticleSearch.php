@@ -4,7 +4,8 @@ namespace App\Search;
 
 use App\Models\Article;
 use App\Services\GuardianService;
-use App\Services\NewsApi\NewsApiService;
+use App\Services\NewsApiService;
+use App\Services\NyTimeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -40,7 +41,7 @@ class ArticleSearch
         }
 
         if( $filters->has('source') ){
-            $validate_source = [NewsApiService::AGGREGATOR_NAME, GuardianService::AGGREGATOR_NAME];
+            $validate_source = [NewsApiService::AGGREGATOR_NAME, GuardianService::AGGREGATOR_NAME, NyTimeService::AGGREGATOR_NAME];
             if( in_array($filters->input('source'), $validate_source) ){
                 $article->where('source', $filters->input('source') );
             }

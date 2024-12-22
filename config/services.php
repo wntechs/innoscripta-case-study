@@ -34,25 +34,21 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'news_keywords' => env('NEWS_API_KEYWORDS'),
+    'news_lang' => env('NEWS_API_LANGUAGE'),
     'news_api' => [
         'api_key' => env('NEWS_API_KEY'),
-        'daily_api_limit' => env('NEWS_API_DAILY_LIMIT'),
+        'daily_api_limit' => env('NEWS_API_DAILY_LIMIT', 100),
         'sources' => env('NEWS_API_SOURCES'),
-        'keywords' => env('NEWS_API_KEYWORDS'),
-        'lang' => env('NEWS_API_LANGUAGE'),
     ],
     'guardian_api' => [
         'api_key' => env('GUARDIAN_API_KEY'),
         'daily_api_limit' => env('GUARDIAN_API_DAILY_LIMIT'),
-        'keywords' => env('NEWS_API_KEYWORDS'),
-        'lang' => env('NEWS_API_LANGUAGE'),
     ],
     'nytimes_api' => [
         'api_key' => env('NY_TIMES_API_KEY'),
-        'daily_api_limit' => env('NY_TIMES_API_DAILY_LIMIT'),
-        'api_rate_per_minute' => env('NY_TIMES_API_RATE_PER_MINUTE'),
-        'keywords' => env('NEWS_API_KEYWORDS'),
-        'lang' => env('NEWS_API_LANGUAGE'),
+        'daily_api_limit' => env('NY_TIMES_API_DAILY_LIMIT',100),
+        'api_rate_per_minute' => env('NY_TIMES_API_RATE_PER_MINUTE', 10),
     ]
 
 ];
