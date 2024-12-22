@@ -41,12 +41,12 @@ class ArticleSearch
         }
 
         if( $filters->has('source') ){
+
             $validate_source = [NewsApiService::AGGREGATOR_NAME, GuardianService::AGGREGATOR_NAME, NyTimeService::AGGREGATOR_NAME];
             if( in_array($filters->input('source'), $validate_source) ){
-                $article->where('source', $filters->input('source') );
+                $article->where('aggregator', $filters->input('source') );
             }
         }
-
         return $article->paginate();
     }
 }
