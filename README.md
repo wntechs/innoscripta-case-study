@@ -1,6 +1,6 @@
 ## About Project
 
-The project is aimed at demonstrating backend capability to fetch news data from various third part service using their API and store it in db. There is no authentication/authorization implemented for the sake of simplicity. The project also exposes an API endpoint to get the stored news articles from the database and filter them as per following query parameters:
+The project is aimed at demonstrating backend capability to fetch news data from various third party service using their API and store it in db. There is no authentication/authorization implemented for the sake of simplicity. The project also exposes an API endpoint to get the stored news articles from the database and filter them as per following query parameters:
 
 API Endpoint: /api/articles
 - q: free text search 
